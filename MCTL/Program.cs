@@ -1,8 +1,9 @@
-﻿using MCTL.Auth;
+﻿using CmlLib.Core;
+using CmlLib.Core.Auth;
+using MCTL.Auth;
 using MCTL.Config;
 using MCTL.Game;
 using MCTL.Mods;
-using CmlLib.Core;
 using System.Text.Json.Nodes;
 
 namespace MCTL;
@@ -44,7 +45,24 @@ internal static class Program
         {
             switch (action)
             {
-                case "login": await MicrosoftAuth.LoginAndSaveAsync(); break;
+                case "login":
+                    if (args.Length >= 3 && args[1].ToLower() == "offline")
+                    {
+                        var username = args[2];
+                        var offlineSession = MicrosoftAuth.CreateOfflineSession(username);
+                        config.IsOfflineMode = true;
+                        config.Username = offlineSession.Username;
+                        config.Uuid = offlineSession.UUID;
+                        config.AccessToken = ""; // 清空之前的正版 Token
+
+                        LauncherConfigStore.Save(config);
+                        Console.WriteLine($"已启用离线登录！当前用户名：{username}");
+                    }
+                    else
+                    {
+                        await MicrosoftAuth.LoginAndSaveAsync();
+                    }
+                    break;
                 case "list":
                     var versions = await GameInstaller.GetInstalledVersionsAsync(_launcher);
                     if (versions.Count == 0) Console.WriteLine("（没有已安装的版本）");
@@ -61,9 +79,19 @@ internal static class Program
                     break;
                 case "launch":
                     if (args.Length < 2) { Console.WriteLine("用法: mctl launch <version>"); return; }
-                    var session = MicrosoftAuth.GetCachedSession();
-                    if (session == null) { Console.WriteLine("尚未登录，请先运行: mctl login"); return; }
-                    await GameLauncher.LaunchAsync(_launcher, args[1], session);
+                    MSession? launchSession = null;
+                    if (config.IsOfflineMode){
+                        launchSession = MicrosoftAuth.CreateOfflineSession(config.Username ?? "Player");
+                        Console.WriteLine($"正在使用离线账户启动：{launchSession.Username}");
+                    }
+                    else{
+                        launchSession = MicrosoftAuth.GetCachedSession();
+                    }
+                    if (launchSession == null){
+                        Console.WriteLine("尚未登录！请运行：\n  mctl login (正版)\n  mctl login offline <用户名> (离线)");
+                        return;
+                    }
+                    await GameLauncher.LaunchAsync(_launcher, args[1], launchSession);
                     break;
                 case "config": HandleConfig(args); break;
                 case "help": case "--help": case "-h": PrintHelp(); break;
@@ -105,9 +133,11 @@ internal static class Program
     private static void HandleConfig(string[] args)
     {
         var config = LauncherConfigStore.Load();
+
+        // 如果没有其它参数，显示当前配置
         if (args.Length == 1)
         {
-            Console.WriteLine("=== 当前配置 ===");
+            Console.WriteLine("=== 当前全局配置 ===");
             Console.WriteLine($"游戏目录      : {config.GameDirectory}");
             Console.WriteLine($"最大内存 (MB) : {config.MaxRamMb}");
             Console.WriteLine($"JVM 参数      : {(string.IsNullOrWhiteSpace(config.JvmArgs) ? "(无)" : config.JvmArgs)}");
@@ -116,17 +146,35 @@ internal static class Program
             return;
         }
 
-        var ram = GetArgValue(args, "--memory") ?? GetArgValue(args, "--ram");
-        if (ram != null && int.TryParse(ram, out var r)) config.MaxRamMb = r;
+        // 1. 处理游戏目录
+        var dirArg = GetArgValue(args, "--game-dir") ?? GetArgValue(args, "--dir");
+        if (!string.IsNullOrWhiteSpace(dirArg))
+        {
+            var newDir = Path.GetFullPath(dirArg);
+            config.GameDirectory = newDir;
+            _gameDir = newDir; // 更新当前运行环境的变量
+            _launcher = new MinecraftLauncher(new MinecraftPath(newDir)); // 重新初始化
+            _modManager = new ModManager(newDir);
+            Console.WriteLine($"游戏目录已更改为: {newDir}");
+        }
 
-        var jvm = GetArgValue(args, "--jvm-args");
-        if (jvm != null) config.JvmArgs = jvm;
+        // 2. 处理内存
+        var ramArg = GetArgValue(args, "--memory") ?? GetArgValue(args, "--ram");
+        if (ramArg != null && int.TryParse(ramArg, out var ram))
+            config.MaxRamMb = ram;
 
-        var iso = GetArgValue(args, "--isolation");
-        if (iso != null) config.EnableVersionIsolation = iso.Equals("true", StringComparison.OrdinalIgnoreCase) || iso == "1";
+        // 3. 处理 JVM 参数
+        var jvmArg = GetArgValue(args, "--jvm-args");
+        if (jvmArg != null)
+            config.JvmArgs = jvmArg;
+
+        // 4. 处理版本隔离
+        var isoArg = GetArgValue(args, "--isolation");
+        if (isoArg != null)
+            config.EnableVersionIsolation = isoArg.Equals("true", StringComparison.OrdinalIgnoreCase) || isoArg == "1";
 
         LauncherConfigStore.Save(config);
-        Console.WriteLine("配置已更新！");
+        Console.WriteLine("配置已保存并更新！");
     }
 
     private static async Task<string?> FetchLatestFabricLoaderAsync(string mcVersion)
@@ -159,7 +207,7 @@ internal static class Program
         Console.WriteLine("用法: mctl <command> [options]");
         Console.WriteLine("\n命令:");
         Console.WriteLine("  login                         登录微软账户");
-        Console.WriteLine("  list                          列出已安装版本");
+        Console.WriteLine("  list                          列出本地已安装版本");
         Console.WriteLine("  install <mc_version>          安装游戏");
         Console.WriteLine("  clone <src> <target>          克隆并隔离版本");
         Console.WriteLine("  mod <query> <mc> <loader>     下载 Modrinth 模组");
@@ -170,8 +218,12 @@ internal static class Program
         Console.WriteLine("  --loader-version=<ver>        指定加载器版本（Fabric不填则自动查最新）");
         Console.WriteLine("  --name=<name>                 安装后自动克隆为独立版本");
         Console.WriteLine("\nConfig 参数:");
-        Console.WriteLine("  --memory=<MB>                 分配最大内存");
-        Console.WriteLine("  --jvm-args=\"<args>\"           额外 JVM 参数");
+        Console.WriteLine("  --game-dir=<path>             设置 .minecraft 目录");
+        Console.WriteLine("  --memory=<MB>                 分配最大内存 (如: --memory=8192)");
+        Console.WriteLine("  --jvm-args=\"<args>\"           额外的 JVM 参数");
         Console.WriteLine("  --isolation=<true|false>      开启或关闭版本隔离");
+        Console.WriteLine("\n提示:");
+        Console.WriteLine("  也可以在任意命令前加 -d <path> 临时指定目录，例如:");
+        Console.WriteLine("  mctl -d D:\\MC list");
     }
 }

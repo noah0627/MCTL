@@ -19,10 +19,23 @@ public static class GameInstaller
         Console.WriteLine($"\nMinecraft {version} 安装完成。");
     }
 
-    public static async Task<List<string>> GetInstalledVersionsAsync(MinecraftLauncher launcher)
+    public static Task<List<string>> GetInstalledVersionsAsync(MinecraftLauncher launcher)
     {
-        var versions = await launcher.GetAllVersionsAsync();
-        return versions.Select(v => v.Name).ToList();
+        var versionsDir = launcher.MinecraftPath.Versions;
+        if (!Directory.Exists(versionsDir))
+            return Task.FromResult(new List<string>());
+
+        var installedVersions = Directory.GetDirectories(versionsDir)
+            .Where(dir =>
+            {
+                var name = Path.GetFileName(dir);
+                return !string.IsNullOrEmpty(name) &&
+                       File.Exists(Path.Combine(dir, $"{name}.json"));
+            })
+            .Select(dir => Path.GetFileName(dir)!)
+            .ToList();
+
+        return Task.FromResult(installedVersions);
     }
 
     public static async Task<string> InstallForgeAsync(MinecraftLauncher launcher, string mcVersion, string forgeVersion)
@@ -39,7 +52,6 @@ public static class GameInstaller
         await launcher.InstallAsync(installedId);
         return installedId;
     }
-
     public static async Task<string?> InstallFabricAsync(string mcDir, string mcVersion, string loaderVersion)
     {
         var installerPath = Path.Combine(AppContext.BaseDirectory, "fabric-installer.jar");
@@ -107,7 +119,7 @@ public static class GameInstaller
         if (File.Exists(sourceJarPath)) File.Move(sourceJarPath, targetJarPath);
 
         Directory.CreateDirectory(Path.Combine(targetDir, "mods"));
-        Console.WriteLine($"克隆成功！mods 文件夹已创建。启动命令：mctl launch {targetVersion}");
+        Console.WriteLine($"克隆成功！专属 mods 文件夹已创建。启动命令：mctl launch {targetVersion}");
         return Task.CompletedTask;
     }
 

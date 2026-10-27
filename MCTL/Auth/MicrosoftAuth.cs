@@ -12,9 +12,9 @@ public static class MicrosoftAuth
     public static async Task<MSession?> LoginAndSaveAsync()
     {
         var config = LauncherConfigStore.Load();
-        if (string.IsNullOrWhiteSpace(config.ClientId) || config.ClientId == "870e4645-b36a-4890-a8f3-6c408f2754bc")
+        if (string.IsNullOrWhiteSpace(config.ClientId))
         {
-            Console.WriteLine("错误：请先在配置文件中设置正确的 Azure Client ID。");
+            Console.WriteLine("错误：请在 config.json 中设置正确的 Azure Client ID。");
             return null;
         }
 
@@ -64,6 +64,22 @@ public static class MicrosoftAuth
             AccessToken = config.AccessToken,
             Username = config.Username ?? "Player",
             UUID = config.Uuid ?? ""
+        };
+    }
+
+    public static MSession CreateOfflineSession(string username)
+    {
+        // 根据用户名生成固定的离线 UUID
+        using var md5 = System.Security.Cryptography.MD5.Create();
+        var hash = md5.ComputeHash(System.Text.Encoding.UTF8.GetBytes("OfflinePlayer:" + username));
+        var uuidStr = new Guid(hash).ToString("N");
+        var formattedUuid = $"{uuidStr[..8]}-{uuidStr[8..12]}-{uuidStr[12..16]}-{uuidStr[16..20]}-{uuidStr[20..]}";
+
+        return new MSession
+        {
+            AccessToken = "0", 
+            Username = username,
+            UUID = formattedUuid
         };
     }
 }

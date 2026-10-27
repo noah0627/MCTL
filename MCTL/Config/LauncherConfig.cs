@@ -9,7 +9,7 @@ public sealed class LauncherConfig
     public string GameDirectory { get; set; } = "";
 
     [JsonPropertyName("clientId")]
-    public string ClientId { get; set; } = "你的Azure应用ClientID";
+    public string ClientId { get; set; } = "870e4645-b36a-4890-a8f3-6c408f2754bc";
 
     [JsonPropertyName("accessToken")]
     public string? AccessToken { get; set; }
@@ -28,6 +28,9 @@ public sealed class LauncherConfig
 
     [JsonPropertyName("enableVersionIsolation")]
     public bool EnableVersionIsolation { get; set; } = false;
+
+    [JsonPropertyName("isOfflineMode")]
+    public bool IsOfflineMode { get; set; } = false;
 }
 
 public static class LauncherConfigStore
