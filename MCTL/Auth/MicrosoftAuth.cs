@@ -12,7 +12,7 @@ public static class MicrosoftAuth
     public static async Task<MSession?> LoginAndSaveAsync()
     {
         var config = LauncherConfigStore.Load();
-        if (string.IsNullOrWhiteSpace(config.ClientId) || config.ClientId == "你的Azure应用ClientID")
+        if (string.IsNullOrWhiteSpace(config.ClientId) || config.ClientId == "870e4645-b36a-4890-a8f3-6c408f2754bc")
         {
             Console.WriteLine("错误：请先在配置文件中设置正确的 Azure Client ID。");
             return null;
