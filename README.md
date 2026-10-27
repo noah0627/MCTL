@@ -138,9 +138,6 @@ MCTL 的版本隔离与主流启动器（如 HMCL）行为一致：
 
 ## 常见问题
 
-**Q: `mctl login` 报 403？**
-A: Mojang 需要为 Azure 应用单独授予 Minecraft API 访问权限，请等待官方审批通过。目前仅可使用离线登录。
-
 **Q: Fabric 安装报错 `缺少 fabric-installer.jar`？**
 A: 请前往 [Fabric 官网](https://fabricmc.net/use/installer/) 下载安装程序，并将其命名为 `fabric-installer.jar` 放在 `MCTL.exe` 同级目录。
 
@@ -150,10 +147,7 @@ A: 确保 `java.exe` 在系统 PATH 中，且版本符合所启动 Minecraft 版
 **Q: 装了模组但游戏里没有生效？**
 A: 检查是否开启了版本隔离。若开启，请确认模组位于 `versions/<版本名>/mods/` 下，而非全局 `.minecraft/mods/`。
 
-**Q: 如何切换回正版账户？**
-A: 直接执行 `mctl login` 完成微软登录，会自动覆盖离线配置。
-
-## 技术栈
+## 使用的 Nuget 包
 
 - [.NET 10](https://dotnet.microsoft.com/)
 - [CmlLib.Core](https://github.com/CmlLib/CmlLib.Core) — Minecraft 安装与启动核心
@@ -163,4 +157,4 @@ A: 直接执行 `mctl login` 完成微软登录，会自动覆盖离线配置。
 
 ## License
 
-MIT
+AGPL-3.0
