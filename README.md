@@ -1,6 +1,6 @@
 # MCTL — Minecraft Terminal Launcher
 
-**MCTL** 是一个轻量级、纯命令行的 Minecraft Java 版启动器。
+**MCTL** 是一个轻量级、纯命令行的 Minecraft Java 版启动器，基于.NET 10.0
 
 ## 环境要求
 
