@@ -53,7 +53,7 @@ internal static class Program
                         config.IsOfflineMode = true;
                         config.Username = offlineSession.Username;
                         config.Uuid = offlineSession.UUID;
-                        config.AccessToken = ""; // 清空之前的正版 Token
+                        config.AccessToken = ""; 
 
                         LauncherConfigStore.Save(config);
                         Console.WriteLine($"已启用离线登录！当前用户名：{username}");

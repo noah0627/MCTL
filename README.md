@@ -50,7 +50,7 @@ mctl launch my-forge-pack  # 启动已克隆的隔离版本
 ## 常用命令
 
 ### `mctl login [offline <username>]`
-- `mctl login` — 发起微软设备代码流登录（暂不可用）
+- ~~`mctl login` — 发起微软设备代码流登录~~
 - `mctl login offline <username>` — 切换为离线账户登录
 
 ### `mctl list`
@@ -114,9 +114,11 @@ MCTL 的配置保存在用户目录下：
 {
   "gameDirectory": "D:\\Minecraft",           // 游戏目录
   "clientId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",  // Azure 应用 ID
+  /* 微软账户预留
   "accessToken": "....",                       // 微软登录 Token（自动维护）
   "username": "Steve",                         // 当前账户名
   "uuid": "....",                              // 账户 UUID
+  */
   "maxRamMb": 8192,                            // 最大堆内存
   "jvmArgs": "-XX:+UseG1GC",                   // 额外 JVM 参数
   "enableVersionIsolation": true,              // 是否开启版本隔离
@@ -147,9 +149,8 @@ A: 检查是否开启了版本隔离。若开启，请确认模组位于 `versio
 
 ## 使用的 Nuget 包
 
-- [.NET 10](https://dotnet.microsoft.com/)
-- [CmlLib.Core](https://github.com/CmlLib/CmlLib.Core) — Minecraft 安装与启动核心
-- [CmlLib.Core.Auth.Microsoft](https://github.com/CmlLib/CmlLib.Core.Auth.Microsoft) — 微软账户认证
+- [CmlLib.Core](https://github.com/CmlLib/CmlLib.Core) （Minecraft 安装与启动核心）
+- ~~[CmlLib.Core.Auth.Microsoft](https://github.com/CmlLib/CmlLib.Core.Auth.Microsoft) — 微软账户认证~~
 - [CmlLib.Core.Installer.Forge](https://github.com/CmlLib/CmlLib.Core.Installer.Forge) — Forge 安装
 - [Modrinth API v2](https://docs.modrinth.com/) — 模组搜索与下载
 
