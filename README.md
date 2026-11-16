@@ -21,8 +21,15 @@ mctl config --game-dir="D:\Minecraft"
 
 ### 2. 登录账户
 
-**微软正版登录暂不可用**
+**注：微软正版登录现暂不可用，下面这段就先当废话**
 
+```bash
+mctl login
+```
+运行后会输出类似如下的提示，在任意浏览器打开链接并输入代码即可。
+```text
+To sign in, use a web browser to open the page https://www.microsoft.com/link and enter the code ****-**** to authenticate.
+```
 **离线登录**：
 ```bash
 mctl login offline Steve
